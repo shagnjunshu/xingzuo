@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星语 Astro | 全能占星平台</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 字体优化 -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- 动态星空背景 -->
+    <canvas id="star-bg"></canvas>
+
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo">✨ 星语 Astro</div>
+        <div class="nav-links">
+            <a href="#" onclick="switchTab('home-section', event)" class="active">运势&黄历</a>
+            <a href="#" onclick="switchTab('match-section', event)">深度配对</a>
+            <a href="#" onclick="switchTab('calc-section', event)">专业星盘</a>
+            <a href="#" onclick="switchTab('num-section', event)">生命灵数</a>
+            <a href="#" onclick="switchTab('tarot-section', event)">塔罗牌阵</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <!-- 1. 首页：运势与黄历 -->
+        <section id="home-section" class="tab-content active">
+            <div class="hero">
+                <h1>聆听宇宙的指引</h1>
+                <p id="current-date-display">加载中...</p>
+                <!-- 每日黄历 -->
+                <div class="almanac-box">
+                    <div class="almanac-item good">
+                        <span class="label">宜</span><span id="almanac-good">...</span>
+                    </div>
+                    <div class="almanac-item bad">
+                        <span class="label">忌</span><span id="almanac-bad">...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="zodiac-grid" id="zodiac-grid"></div>
+        </section>
+
+        <!-- 2. 配对页面 -->
+        <section id="match-section" class="tab-content hidden">
+            <div class="card center-card">
+                <h2>❤️ 星座爱情契合度</h2>
+                <div class="match-selector">
+                    <div class="select-wrapper"><select id="sign-1"></select></div>
+                    <div class="heart-icon">⚡</div>
+                    <div class="select-wrapper"><select id="sign-2"></select></div>
+                </div>
+                <button class="action-btn" onclick="calculateMatch()">开始分析</button>
+                
+                <div id="match-result" class="result-box hidden">
+                    <div class="score-circle"><span id="match-score">0%</span></div>
+                    <h3 id="match-title"></h3>
+                    <p id="match-desc"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 专业星盘页面 -->
+        <section id="calc-section" class="tab-content hidden">
+            <div class="card center-card chart-container">
+                <h2>🔮 全息本命星盘</h2>
+                <p>输入出生时间，绘制包含十大行星的完整星盘</p>
+                
+                <div class="chart-form">
+                    <div class="input-row">
+                        <label>出生日期</label>
+                        <input type="date" id="chart-date">
+                    </div>
+                    <div class="input-row">
+                        <label>出生时间 (影响上升星座)</label>
+                        <input type="time" id="chart-time" value="12:00">
+                    </div>
+                </div>
+                
+                <button class="action-btn" onclick="generateFullChart()">绘制星盘</button>
+
+                <!-- 结果区域 -->
+                <div id="chart-result" class="result-box hidden">
+                    <div class="canvas-wrapper">
+                        <canvas id="astro-wheel" width="600" height="600"></canvas>
+                    </div>
+                    
+                    <div class="key-placements">
+                        <div class="key-item">
+                            <span class="planet-icon">🏹</span>
+                            <div class="key-info"><small>上升 (ASC)</small><strong id="res-asc">--</strong></div>
+                        </div>
+                        <div class="key-item">
+                            <span class="planet-icon">☀️</span>
+                            <div class="key-info"><small>太阳</small><strong id="res-sun-full">--</strong></div>
+                        </div>
+                        <div class="key-item">
+                            <span class="planet-icon">🌙</span>
+                            <div class="key-info"><small>月亮</small><strong id="res-moon-full">--</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-analysis" id="chart-analysis-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 生命灵数页面 -->
+        <section id="num-section" class="tab-content hidden">
+            <div class="card center-card">
+                <h2>🔢 生命灵数测算</h2>
+                <div class="form-group">
+                    <label>选择出生日期:</label>
+                    <input type="date" id="num-date" class="date-input">
+                </div>
+                <button class="action-btn" onclick="calculateNumerology()">开始测算</button>
+                <div id="num-result" class="result-box hidden">
+                    <div class="num-badge" id="life-path-num">?</div>
+                    <h3 id="num-title"></h3><p id="num-desc"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 塔罗牌阵页面 -->
+        <section id="tarot-section" class="tab-content hidden">
+            <div class="card center-card tarot-container">
+                <h2>🃏 圣三角牌阵 (过去/现在/未来)</h2>
+                <p>集中精神默念问题，点击下方抽取三张牌</p>
+                <div class="spread-layout">
+                    <div class="tarot-slot">
+                        <div class="tarot-label">过去</div>
+                        <div class="tarot-card" id="card-past" onclick="flipSpreadCard('past')">
+                            <div class="tarot-inner">
+                                <div class="tarot-back"><div class="pattern"></div></div>
+                                <div class="tarot-front" id="front-past"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tarot-slot">
+                        <div class="tarot-label">现在</div>
+                        <div class="tarot-card" id="card-present" onclick="flipSpreadCard('present')">
+                            <div class="tarot-inner">
+                                <div class="tarot-back"><div class="pattern"></div></div>
+                                <div class="tarot-front" id="front-present"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tarot-slot">
+                        <div class="tarot-label">未来</div>
+                        <div class="tarot-card" id="card-future" onclick="flipSpreadCard('future')">
+                            <div class="tarot-inner">
+                                <div class="tarot-back"><div class="pattern"></div></div>
+                                <div class="tarot-front" id="front-future"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tarot-spread-result" class="result-box hidden">
+                    <h3>🔮 牌阵解读</h3>
+                    <div id="spread-text"></div>
+                </div>
+                <button class="reset-btn" onclick="resetSpread()">重新洗牌</button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- 通用弹窗 (运势详情) -->
+    <div id="fortune-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="modal-header-bg">
+                <div class="modal-icon" id="m-icon"></div>
+                <h2 id="m-name"></h2><p id="m-date"></p>
+            </div>
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="switchModalTab('tab-fortune', event)">今日运势</button>
+                <button class="tab-btn" onclick="switchModalTab('tab-profile', event)">性格全解</button>
+            </div>
+            <div id="tab-fortune" class="modal-body active">
+                <div class="fortune-score">
+                    <div class="score-item"><span>整体</span><span id="m-score-total"></span></div>
+                    <div class="score-item"><span>爱情</span><span id="m-score-love"></span></div>
+                    <div class="score-item"><span>事业</span><span id="m-score-career"></span></div>
+                </div>
+                <div class="fortune-text-box"><p id="m-text"></p></div>
+                <div class="lucky-items">
+                    <span>🎨 幸运色: <b id="m-color"></b></span><span>🔢 幸运数: <b id="m-num"></b></span>
+                </div>
+            </div>
+            <div id="tab-profile" class="modal-body hidden">
+                <div class="profile-tags" id="m-tags"></div>
+                <p class="profile-desc" id="m-desc"></p>
+                <div class="profile-meta"><div><strong>主管星:</strong> <span id="m-planet"></span></div><div><strong>元素:</strong> <span id="m-element"></span></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
